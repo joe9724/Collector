@@ -1,5 +1,9 @@
 package model
 
+type User struct {
+	Name string `json:"name"`
+}
+
 type LoginReturn struct {
 	Code int  `json:"code"`  //返回状态码200=ok
 	Validate bool `json:"validate"`  //是否合法

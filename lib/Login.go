@@ -6,12 +6,15 @@ import (
 	"Collector/model"
 	"encoding/json"
 	"log"
+	"upper.io/db.v3/mongo"
+	"fmt"
 )
 
 //vue 调用 post方法 参数:username password 返回
 func Login(w http.ResponseWriter, r *http.Request) {
 
 	var lr model.LoginReturn
+	var user model.User
 
 	r.ParseForm()
     username := r.FormValue("username")
@@ -19,11 +22,32 @@ func Login(w http.ResponseWriter, r *http.Request) {
     authstr := r.FormValue("authstr")
 
     if (util.GetMD5Hash(username+password) == authstr){
-    	//字符串合法
-    	lr.Code = 500
+    	//进一步从数据库验证用户账号合法性
+    	lr.Code = 200
+
+    	var settings = mongo.ConnectionURL{
+    		Host:"106.14.2.153",
+    		Database:"Collector",
+    		User:"",
+    		Password:"",
+		}
+
+		sess,err := mongo.Open(settings)
+		if err!=nil{
+			fmt.Println("connect to mongo err"+err.Error())
+		}
+		defer sess.Close()
+
+		err = sess.Collection("rbac_r").Find(model.User{Name:"admin"}).One(&user)
+		if err!=nil{
+			fmt.Println("rbac_r.err"+err.Error())
+		}
+		lr.Role = user.Name
+
 
 	}else{
-		lr.Code = 200
+		//登陆加密错误
+		lr.Code = 500
 	}
 
 
