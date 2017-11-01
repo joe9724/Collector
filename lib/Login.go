@@ -17,32 +17,40 @@ func Login(w http.ResponseWriter, r *http.Request) {
 	var user model.User
 
 	r.ParseForm()
-    username := r.FormValue("username")
-    password := r.FormValue("password")
-    authstr := r.FormValue("authstr")
+	username := r.FormValue("username")
+	password := r.FormValue("password")
+	authstr := r.FormValue("authstr")
 
-    if (util.GetMD5Hash(username+password) == authstr){
-    	//进一步从数据库验证用户账号合法性
-    	lr.Code = 200
+	if (util.GetMD5Hash(username+password) == authstr){
+		//进一步从数据库验证用户账号合法性
+		lr.Code = 200
 
-    	var settings = mongo.ConnectionURL{
-    		Host:"106.14.2.153",
-    		Database:"Collector",
-    		User:"",
-    		Password:"",
+		var settings = mongo.ConnectionURL{
+			Host:"106.14.2.153",
+			Database:"Collector",
+			User:"",
+			Password:"",
 		}
 
 		sess,err := mongo.Open(settings)
 		if err!=nil{
 			fmt.Println("connect to mongo err"+err.Error())
+			lr.Code = 401
 		}
 		defer sess.Close()
 
 		err = sess.Collection("rbac_r").Find(model.User{Name:"admin"}).One(&user)
 		if err!=nil{
 			fmt.Println("rbac_r.err"+err.Error())
+			lr.Code = 402
+		}else{
+			lr.Role = user.Role
+			//进一步从Role中获取对应权限树
+
+
 		}
-		lr.Role = user.Name
+
+
 
 
 	}else{
